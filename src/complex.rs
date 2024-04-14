@@ -18,6 +18,17 @@ impl Complex {
             im: -self.im,
         }
     }
+    pub fn from_vecf64(input: Vec<f64>) -> Vec<Self> {
+        input.iter().map(|x| Self { re: *x, im: 0. }).collect()
+    }
+
+    pub fn real(&self) -> f64 {
+        self.re
+    }
+
+    pub fn abs_squared(&self) -> f64 {
+        self.re.powi(2) + self.im.powi(2)
+    }
 }
 
 pub fn i() -> Complex {
@@ -145,6 +156,7 @@ impl Div<Complex> for f64 {
     }
 }
 
+// assign
 impl AddAssign for Complex {
     fn add_assign(&mut self, rhs: Self) {
         let res = *self + rhs;
