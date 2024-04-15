@@ -25,6 +25,9 @@ impl Complex {
     pub fn real(&self) -> f64 {
         self.re
     }
+    pub fn imag(&self) -> f64 {
+        self.im
+    }
 
     pub fn abs_squared(&self) -> f64 {
         self.re.powi(2) + self.im.powi(2)

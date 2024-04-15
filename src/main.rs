@@ -20,10 +20,6 @@ mod visuals;
 const VISUAL: bool = true;
 
 fn main() {
-    // let mut wave = wave_n(1).1;
-    // for _ in 0..=1 {
-    //     wave = iterate_pde_rk4(wave, DT);
-    // }
     if VISUAL {
         visuals::oneD();
     }
@@ -46,7 +42,7 @@ fn wave_n(n: usize) -> (Vec<f64>, Vec<Complex>) {
 
     let res = second_order_rk4(
         Complex::new(0., 0.),
-        Complex::new(1., 1.),
+        Complex::new(1., -1.),
         -L / 2.,
         L / 2.,
         DX,
