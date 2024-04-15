@@ -28,6 +28,25 @@ fn complex_display() {
     assert_eq!(format!("{}", 5. - 2. * i()), "5-2i");
 }
 
+#[test]
+fn assign() {
+    let mut a = 2. - 5. * i();
+    a += -4. + 9. * i();
+    assert_eq!(a, -2. + 4. * i());
+
+    let mut s = 2. - 5. * i();
+    s -= -4. + 9. * i();
+    assert_eq!(s, 6. - 14. * i());
+
+    let mut m = 2. - 5. * i();
+    m *= -4. + 9. * i();
+    assert_eq!(m, 37. + 38. * i());
+
+    let mut d = 2. - 5. * i();
+    d /= -4. + 9. * i();
+    assert_eq!(d, -53. / 97. + 2. / 97. * i());
+}
+
 // ----------------------------------------------------------------
 // #[test]
 // fn oneD_iteration() {
