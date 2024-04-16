@@ -8,7 +8,7 @@ const M: f64 = 1.;
 const L: f64 = 1.;
 
 const DX: f64 = 0.01;
-const DT: f64 = 0.01;
+const DT: f64 = 0.001;
 
 #[cfg(test)]
 mod test;
@@ -37,17 +37,10 @@ fn e(n: usize) -> f64 {
     (n as f64).powi(2) * H.powi(2) / (8. * M * L.powi(2))
 }
 
-fn wave_n(n: usize) -> (Vec<f64>, Vec<Complex>) {
+fn wave_n(n: usize, initials: (Complex, Complex)) -> (Vec<f64>, Vec<Complex>) {
     let dx2 = |p, _dp, x| 2. * M * p * (v(x) - e(n)) / H_BAR.powi(2);
 
-    let res = second_order_rk4(
-        Complex::new(0., 0.),
-        Complex::new(1., -1.),
-        -L / 2.,
-        L / 2.,
-        DX,
-        dx2,
-    );
+    let res = second_order_rk4(initials.0, initials.1, -L / 2., L / 2., DX, dx2);
 
     (res.0, normalize(res.1))
 }
@@ -139,5 +132,6 @@ fn iterate_pde_rk4(psi_n: Vec<Complex>, h: f64) -> Vec<Complex> {
 
 fn dphi_dt(x_i: usize, psi_n: &Vec<Complex>) -> Complex {
     let x_c = -L / 2. + x_i as f64 * DX;
-    i() * ((psi_n[x_i + 1] - 2. * psi_n[x_i] + psi_n[x_i - 1]) / (2. * DX.powi(2))/* - v(x_c) * psi_n[x_i] */)
+    i() * ((psi_n[x_i + 1] - 2. * psi_n[x_i] + psi_n[x_i - 1]) / (2. * DX.powi(2))
+        - v(x_c) * psi_n[x_i])
 }
