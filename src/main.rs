@@ -1,14 +1,14 @@
 use bevy::log::info;
-use std::f64::consts::PI;
+use std::f64::consts::{E, PI};
 
 const H: f64 = 1.;
 const H_BAR: f64 = H / (2. * PI);
 const M: f64 = 1.;
 
-const L: f64 = 1.;
+const L: f64 = 10.;
 
 const DX: f64 = 0.01;
-const DT: f64 = 0.001;
+const DT: f64 = 0.01;
 
 #[cfg(test)]
 mod test;
@@ -26,23 +26,41 @@ fn main() {
 }
 
 fn v(x: f64) -> f64 {
-    if x >= -L / 2. && x <= L / 2. {
-        0.
-    } else {
-        f64::INFINITY
-    }
+    0.
 }
 
 fn e(n: usize) -> f64 {
     (n as f64).powi(2) * H.powi(2) / (8. * M * L.powi(2))
 }
 
-fn wave_n(n: usize, initials: (Complex, Complex)) -> (Vec<f64>, Vec<Complex>) {
-    let dx2 = |p, _dp, x| 2. * M * p * (v(x) - e(n)) / H_BAR.powi(2);
+fn wave() -> (Vec<f64>, Vec<Complex>) {
+    let k_0 = 0f64;
+    let dk = 10f64;
+    let c_k = |k: f64| E.powf(-((k - k_0) / dk).powi(2));
+    let f_k = |x: f64, k: f64| (k * x).cos() + i() * (k * x).sin();
 
-    let res = second_order_rk4(initials.0, initials.1, -L / 2., L / 2., DX, dx2);
+    let mut c_values = Vec::new();
+    let mut x_values = Vec::new();
+    for k in (k_0 - 10. * dk) as isize..=(k_0 + 10. * dk) as isize {
+        c_values.push((c_k(k as f64) + 0. * i(), k as f64));
 
-    (res.0, normalize(res.1))
+        if ((k as f64) >= k_0 - L / 2.) && ((k as f64) < k_0 + L / 2.) {
+            for i in (0..100) {
+                x_values.push(k as f64 + i as f64 * 0.01);
+            }
+        }
+    }
+
+    let mut p_values = Vec::new();
+    for x in x_values.clone() {
+        let mut v = Complex::new(0., 0.);
+        for (c, k) in c_values.clone() {
+            v += c * f_k(x as f64, k);
+        }
+        p_values.push(v);
+    }
+
+    (x_values, normalize(p_values))
 }
 
 fn normalize(data: Vec<Complex>) -> Vec<Complex> {
@@ -132,6 +150,5 @@ fn iterate_pde_rk4(psi_n: Vec<Complex>, h: f64) -> Vec<Complex> {
 
 fn dphi_dt(x_i: usize, psi_n: &Vec<Complex>) -> Complex {
     let x_c = -L / 2. + x_i as f64 * DX;
-    i() * ((psi_n[x_i + 1] - 2. * psi_n[x_i] + psi_n[x_i - 1]) / (2. * DX.powi(2))
-        - v(x_c) * psi_n[x_i])
+    i() * ((psi_n[x_i + 1] - 2. * psi_n[x_i] + psi_n[x_i - 1]) / DX.powi(2) - v(x_c) * psi_n[x_i])
 }

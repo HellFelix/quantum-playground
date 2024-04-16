@@ -1,4 +1,4 @@
-use crate::{complex::*, iterate_pde_rk4, simpsons_rule, wave_n, DT, L};
+use crate::complex::*;
 
 #[test]
 fn basic_complex_arithmetic() {
