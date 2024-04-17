@@ -1,11 +1,11 @@
-use bevy::log::info;
+use bevy::{log::info, render::render_resource::encase::private::RuntimeSizedArray};
 use std::f64::consts::{E, PI};
 
 const H: f64 = 1.;
 const H_BAR: f64 = H / (2. * PI);
 const M: f64 = 1.;
 
-const L: f64 = 10.;
+const L: f64 = 8.;
 
 const DX: f64 = 0.01;
 const DT: f64 = 0.01;
@@ -34,33 +34,27 @@ fn e(n: usize) -> f64 {
 }
 
 fn wave() -> (Vec<f64>, Vec<Complex>) {
-    let k_0 = 0f64;
-    let dk = 10f64;
-    let c_k = |k: f64| E.powf(-((k - k_0) / dk).powi(2));
+    let k_0: isize = 10;
+    let k_range: isize = 10; // 20
+    let dk = 5f64;
+    let c_k = |k: f64| E.powf(-((k - k_0 as f64) / dk).powi(2));
     let f_k = |x: f64, k: f64| (k * x).cos() + i() * (k * x).sin();
 
-    let mut c_values = Vec::new();
-    let mut x_values = Vec::new();
-    for k in (k_0 - 10. * dk) as isize..=(k_0 + 10. * dk) as isize {
-        c_values.push((c_k(k as f64) + 0. * i(), k as f64));
+    let x_values: Vec<f64> = ((-L / (2. * DX)) as isize..=(L / (2. * DX)) as isize)
+        .map(|x| x as f64 * DX)
+        .collect();
 
-        if ((k as f64) >= k_0 - L / 2.) && ((k as f64) < k_0 + L / 2.) {
-            for i in (0..100) {
-                x_values.push(k as f64 + i as f64 * 0.01);
-            }
-        }
-    }
-
-    let mut p_values = Vec::new();
+    let mut wave: Vec<Complex> = Vec::new();
     for x in x_values.clone() {
-        let mut v = Complex::new(0., 0.);
-        for (c, k) in c_values.clone() {
-            v += c * f_k(x as f64, k);
+        let mut p_x = Complex::new(0., 0.);
+        for k in (k_0 - k_range)..=(k_0 + k_range) {
+            p_x += c_k(k as f64) * f_k(x, k as f64);
         }
-        p_values.push(v);
+
+        wave.push(p_x);
     }
 
-    (x_values, normalize(p_values))
+    (x_values, normalize(wave))
 }
 
 fn normalize(data: Vec<Complex>) -> Vec<Complex> {
@@ -128,27 +122,33 @@ fn simpsons_rule(data: Vec<f64>, lower_bound: f64, upper_bound: f64) -> f64 {
 }
 
 fn iterate_pde_rk4(psi_n: Vec<Complex>, h: f64) -> Vec<Complex> {
-    let k1 = |x_i| dphi_dt(x_i, &psi_n);
-    let k2 = |x_i| dphi_dt(x_i, &psi_n) + 0.5 * h * k1(x_i);
-    let k3 = |x_i| dphi_dt(x_i, &psi_n) + 0.5 * h * k2(x_i);
-    let k4 = |x_i| dphi_dt(x_i, &psi_n) + h * k3(x_i);
+    let last = psi_n.len() - 1;
+    let k1 = |x_i| dphi_dt(x_i, &psi_n, last);
+    let k2 = |x_i| dphi_dt(x_i, &psi_n, last) + 0.5 * h * k1(x_i);
+    let k3 = |x_i| dphi_dt(x_i, &psi_n, last) + 0.5 * h * k2(x_i);
+    let k4 = |x_i| dphi_dt(x_i, &psi_n, last) + h * k3(x_i);
 
     let psi_next_fn = |x_i| psi_n[x_i] + h / 6. * (k1(x_i) + 2. * k2(x_i) + 2. * k3(x_i) + k4(x_i));
 
     let mut psi_next: Vec<Complex> = Vec::new();
-    // first value must always be the same bacause we cannot form a derivative at the start psi_n[-1] is invalid
-    // this is ok because the edge values must always be zero since the potential barrier at that
-    // those points are infinite
-    psi_next.push(psi_n[0]);
-    for i in 1..psi_n.len() - 1 {
+    for i in 0..psi_n.len() {
         psi_next.push(psi_next_fn(i));
     }
-    // last value is the same as before for the same reason as the first
-    psi_next.push(*psi_n.last().unwrap());
     normalize(psi_next)
 }
 
-fn dphi_dt(x_i: usize, psi_n: &Vec<Complex>) -> Complex {
+fn dphi_dt(x_i: usize, psi_n: &Vec<Complex>, last: usize) -> Complex {
     let x_c = -L / 2. + x_i as f64 * DX;
-    i() * ((psi_n[x_i + 1] - 2. * psi_n[x_i] + psi_n[x_i - 1]) / DX.powi(2) - v(x_c) * psi_n[x_i])
+
+    if x_i == 0 {
+        // foreward derivative
+        i() * ((psi_n[x_i + 2] - 2. * psi_n[x_i + 1] + psi_n[x_i]) / DX.powi(2)
+            - v(x_c) * psi_n[x_i])
+    } else if x_i == last {
+        i() * ((psi_n[x_i] - 2. * psi_n[x_i - 1] + psi_n[x_i - 2]) / DX.powi(2)
+            - v(x_c) * psi_n[x_i])
+    } else {
+        i() * ((psi_n[x_i + 1] - 2. * psi_n[x_i] + psi_n[x_i - 1]) / DX.powi(2)
+            - v(x_c) * psi_n[x_i])
+    }
 }
