@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use crate::complex::*;
 
 #[test]
@@ -26,6 +28,11 @@ fn f64_complex_arithmetic() {
 fn complex_display() {
     assert_eq!(format!("{}", 5. + 2. * i()), "5+2i");
     assert_eq!(format!("{}", 5. - 2. * i()), "5-2i");
+}
+
+#[test]
+fn exponential() {
+    assert!((Complex::exp(0. - i() * PI) - Complex::new(-1., 0.)).abs_squared() < 1e-30);
 }
 
 #[test]
