@@ -1,7 +1,10 @@
 use std::{
+    f64::consts::E,
     fmt::Display,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
+
+use num_traits::identities::{One, Zero};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Complex {
@@ -31,6 +34,14 @@ impl Complex {
 
     pub fn abs_squared(&self) -> f64 {
         self.re.powi(2) + self.im.powi(2)
+    }
+
+    pub fn exp(input: Self) -> Self {
+        E.powf(input.re)
+            * Self {
+                re: (input.imag()).cos(),
+                im: (input.imag()).sin(),
+            }
     }
 }
 
@@ -206,5 +217,28 @@ impl DivAssign<f64> for Complex {
     fn div_assign(&mut self, rhs: f64) {
         let res = *self / rhs;
         *self = res;
+    }
+}
+
+// num_traits implementations
+impl Zero for Complex {
+    fn zero() -> Self {
+        Self { re: 0., im: 0. }
+    }
+    fn is_zero(&self) -> bool {
+        *self == Self { re: 0., im: 0. }
+    }
+}
+
+// assume real
+impl One for Complex {
+    fn one() -> Self {
+        Self { re: 1., im: 0. }
+    }
+    fn is_one(&self) -> bool
+    where
+        Self: PartialEq,
+    {
+        *self == Self { re: 1., im: 0. }
     }
 }
