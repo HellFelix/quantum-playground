@@ -14,7 +14,6 @@ mod test;
 
 mod complex;
 use complex::*;
-use iteration::rk4;
 use nalgebra::DVector;
 use num_traits::Zero;
 
@@ -30,16 +29,28 @@ fn main() {
     }
 }
 
-fn v(x: f64) -> f64 {
-    0.
+fn v(x: f64) -> Complex {
+    // if x > 2. && x < 2.5 {
+    //     Complex::new(1., 0.)
+    // } else {
+    //     Complex::zero()
+    // }
+    Complex::zero()
 }
 
+// Creates a wave vector (vector containing the wave function's value at equally spaced
+// x values) by assuming psi = int{c(k)e^(ikx)}dk, where c_k is a gaussian.
 fn wave() -> (DVector<f64>, DVector<Complex>) {
+    // the central value of c(k)
     let k_0: isize = 10;
+    // we cannot integrate form -infty..infty, thus we make the cut-off at this value
     let k_range: isize = 10; // 10
+                             // width of the gaussian
     let dk = 5f64;
+    // c(k) = e^(-(k-k_0)/dk)^2
     let c_k = |k: f64| E.powf(-((k - k_0 as f64) / dk).powi(2));
-    let f_k = |x: f64, k: f64| (k * x).cos() + i() * (k * x).sin();
+    // psi_n(x, k) = e^(ikx)
+    let f_k = |x: f64, k: f64| Complex::exp(i() * (k * x));
 
     let x_values: Vec<f64> = ((-L / (2. * DX)) as isize..=(L / (2. * DX)) as isize)
         .map(|x| x as f64 * DX)
@@ -47,7 +58,7 @@ fn wave() -> (DVector<f64>, DVector<Complex>) {
 
     let mut wave: Vec<Complex> = Vec::new();
     for x in x_values.clone() {
-        let mut p_x = Complex::new(0., 0.);
+        let mut p_x = Complex::zero();
         for k in (k_0 - k_range)..=(k_0 + k_range) {
             p_x += c_k(k as f64) * f_k(x, k as f64);
         }
@@ -58,9 +69,13 @@ fn wave() -> (DVector<f64>, DVector<Complex>) {
     (DVector::from(x_values), DVector::from(normalize(wave)))
 }
 
+// Assuming equally spaced points, using simpsons rule makes it so the square of the
+// inputted data itegrates to 1.
 fn normalize(data: Vec<Complex>) -> Vec<Complex> {
     let data_squared = data.clone().iter().map(|x| x.abs_squared()).collect();
     let tot_integral = simpsons_rule(data_squared, -L / 2., L / 2.);
+    // Each value must be devided by the root of the total integral since
+    // we're considering the squares of each data point.
     data.iter().map(|x| *x / tot_integral.sqrt()).collect()
 }
 

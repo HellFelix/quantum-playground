@@ -1,9 +1,6 @@
 #![allow(non_snake_case)]
 
-use std::{
-    thread,
-    time::{Duration, SystemTime},
-};
+use std::time::SystemTime;
 
 use bevy::prelude::*;
 use nalgebra::{DMatrix, DVector};
@@ -11,9 +8,8 @@ use nalgebra::{DMatrix, DVector};
 use crate::{
     complex::Complex,
     iteration::{descrete_derivative_matrix, descrete_potential_matrix, rk4},
-    wave, DT, DX, H_BAR,
+    v, DT, H_BAR,
 };
-const N: usize = 1;
 
 pub fn oneD() {
     App::new()
@@ -71,9 +67,9 @@ fn setup_matricies(mut commands: Commands, data: Query<&Data>) {
     let data = data.get_single().unwrap();
 
     let size = data.x_raw.len();
-    let _T = descrete_derivative_matrix(size, DX);
+    let _T = descrete_derivative_matrix(size);
 
-    let _V = descrete_potential_matrix(size);
+    let _V = descrete_potential_matrix(Box::new(v));
 
     let U = (DT / Complex::new(0., H_BAR)) * (&_T + &_V);
 
@@ -126,15 +122,13 @@ fn draw_wave_function(mut gizmos: Gizmos, data: Query<&Data>) {
 }
 
 fn update_wave_function(mut data: Query<&mut Data>, matricies: Query<&Matricies>) {
-    //thread::sleep(Duration::from_millis(100));
     let mut data = data.get_single_mut().unwrap();
-    let mut matricies = matricies.get_single().unwrap();
+    let matricies = matricies.get_single().unwrap();
     // iterate time
-    let mut next = data.raw.clone();
 
-    for _ in 0..1 {
-        next = rk4(next, &matricies.U);
-    }
+    let start = SystemTime::now();
+    let next = rk4(&data.raw, &matricies.U);
+    info!("iteration took {}", start.elapsed().unwrap().as_micros());
 
     // calculate new values
     let next_prob = DVector::from(

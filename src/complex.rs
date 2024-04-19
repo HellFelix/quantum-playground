@@ -22,8 +22,9 @@ impl Complex {
             im: -self.im,
         }
     }
-    pub fn from_vecf64(input: Vec<f64>) -> Vec<Self> {
-        input.iter().map(|x| Self { re: *x, im: 0. }).collect()
+
+    pub fn from_real(value: f64) -> Self {
+        Self { re: value, im: 0. }
     }
 
     pub fn real(&self) -> f64 {
@@ -221,6 +222,14 @@ impl DivAssign<f64> for Complex {
     }
 }
 
+// Shorthand
+impl From<f64> for Complex {
+    fn from(value: f64) -> Self {
+        // assume value is real
+        Self::new(value, 0.)
+    }
+}
+
 // num_traits implementations
 impl Zero for Complex {
     fn zero() -> Self {
@@ -244,6 +253,7 @@ impl One for Complex {
     }
 }
 
+// Matrix implementations
 impl Mul<Matrix<Complex, Dyn, Dyn, VecStorage<Complex, Dyn, Dyn>>> for Complex {
     type Output = Matrix<Complex, Dyn, Dyn, VecStorage<Complex, Dyn, Dyn>>;
     fn mul(self, rhs: Matrix<Complex, Dyn, Dyn, VecStorage<Complex, Dyn, Dyn>>) -> Self::Output {
@@ -257,11 +267,11 @@ impl Mul<Matrix<Complex, Dyn, Dyn, VecStorage<Complex, Dyn, Dyn>>> for Complex {
     }
 }
 
-impl Mul<Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>> for Complex {
+impl Mul<&Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>> for Complex {
     type Output = Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>;
     fn mul(
         self,
-        rhs: Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>,
+        rhs: &Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>,
     ) -> Self::Output {
         let mut res = rhs.to_owned();
 
