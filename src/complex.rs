@@ -4,6 +4,7 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
+use nalgebra::{base::dimension::Dyn, base::VecStorage, Const, Matrix};
 use num_traits::identities::{One, Zero};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -240,5 +241,34 @@ impl One for Complex {
         Self: PartialEq,
     {
         *self == Self { re: 1., im: 0. }
+    }
+}
+
+impl Mul<Matrix<Complex, Dyn, Dyn, VecStorage<Complex, Dyn, Dyn>>> for Complex {
+    type Output = Matrix<Complex, Dyn, Dyn, VecStorage<Complex, Dyn, Dyn>>;
+    fn mul(self, rhs: Matrix<Complex, Dyn, Dyn, VecStorage<Complex, Dyn, Dyn>>) -> Self::Output {
+        let mut res = rhs.to_owned();
+
+        for rhs in res.as_mut_slice().iter_mut() {
+            *rhs *= self
+        }
+
+        res
+    }
+}
+
+impl Mul<Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>> for Complex {
+    type Output = Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>;
+    fn mul(
+        self,
+        rhs: Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>,
+    ) -> Self::Output {
+        let mut res = rhs.to_owned();
+
+        for rhs in res.as_mut_slice().iter_mut() {
+            *rhs *= self
+        }
+
+        res
     }
 }
