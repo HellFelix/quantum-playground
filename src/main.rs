@@ -22,6 +22,7 @@ mod visuals;
 mod iteration;
 
 const VISUAL: bool = true;
+const POTENTIAL: bool = false;
 
 fn main() {
     if VISUAL {

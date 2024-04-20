@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use crate::{complex::*, DT, H_BAR, L, M};
+use crate::{complex::*, v, DT, H_BAR, L, M, POTENTIAL};
 use nalgebra::{DMatrix, DVector};
 use num_traits::{One, Zero};
 
@@ -16,15 +16,28 @@ pub fn rk4_iter_dt(psi0: &DVector<Complex>) -> DVector<Complex> {
 }
 
 pub fn d_dt(f: &DVector<Complex>) -> DVector<Complex> {
-    let f = -(H_BAR.powi(2) / (2. * M)) * Complex::from_real(1. / DX.powi(2)) * f;
+    let f_h = -(H_BAR.powi(2) / (2. * M)) * Complex::from_real(1. / DX.powi(2)) * f;
     let last = f.len() - 1;
-    let mut pre_deriv = vec![-2. * f[0] + f[1]];
+    let mut pre_deriv = vec![-2. * f_h[0] + f_h[1]];
     for i in 1..last {
-        pre_deriv.push(f[i - 1] - 2. * f[i] + f[i + 1]);
+        pre_deriv.push(f_h[i - 1] - 2. * f_h[i] + f_h[i + 1]);
     }
-    pre_deriv.push(f[last - 1] + -2. * f[last]);
-    let res = DVector::from(pre_deriv);
-    (DT / Complex::new(0., H_BAR)) * res
+    pre_deriv.push(f_h[last - 1] + -2. * f_h[last]);
+    let deriv = DVector::from(pre_deriv);
+
+    if POTENTIAL {
+        let potent = &mut DVector::from(
+            ((-L / (2. * DX)) as isize..=(L / (2. * DX)) as isize)
+                .map(|x| v(x as f64 * DX))
+                .collect::<Vec<Complex>>(),
+        );
+        for i in 0..f.len() {
+            potent[i] *= f[i];
+        }
+        (DT / Complex::new(0., H_BAR)) * (deriv + potent.to_owned())
+    } else {
+        (DT / Complex::new(0., H_BAR)) * deriv
+    }
 }
 
 // Using matrix multiplication is a lot more elegant, and easier to get right.

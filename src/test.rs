@@ -81,6 +81,6 @@ fn oneD_iter() {
 
     for i in 0..size {
         // the resulting values should be equal (with some leeway for floating point errors)
-        assert!(iter_matrix[i].abs_squared() - iter_vector[i].abs_squared() < 1e-15);
+        assert!(iter_matrix[i].abs_squared() - iter_vector[i].abs_squared() < 1e-15)
     }
 }

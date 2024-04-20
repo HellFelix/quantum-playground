@@ -170,11 +170,11 @@ fn update_wave_function(
     // iterate
     let mut data = data.get_single_mut().unwrap();
     let mut next = data.raw.clone();
-    //let start = SystemTime::now();
+    let start = SystemTime::now();
     for _ in 0..data.speed {
         next = rk4_iter_dt(&next);
     }
-    //info!("iteration took {}us", start.elapsed().unwrap().as_micros());
+    info!("iteration took {}us", start.elapsed().unwrap().as_micros());
 
     // calculate new values
     let next_prob = DVector::from(
