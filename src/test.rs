@@ -1,6 +1,12 @@
 use std::f64::consts::PI;
 
-use crate::complex::*;
+use crate::{
+    complex::*,
+    iteration::{
+        descrete_derivative_matrix, descrete_potential_matrix, rk4_iter_dt, rk4_matrix_mul,
+    },
+    v, wave, DT, H_BAR,
+};
 
 #[test]
 fn basic_complex_arithmetic() {
@@ -54,17 +60,27 @@ fn assign() {
     assert_eq!(d, -53. / 97. + 2. / 97. * i());
 }
 
-// ----------------------------------------------------------------
-// #[test]
-// fn oneD_iteration() {
-//     let mut wave = wave_n(1).1;
-//     for _ in 0..20 {
-//         wave = iterate_pde_rk4(wave, DT);
-//         assert!((tot_prob(wave.clone()) - 1.).abs() < 1e-6);
-//     }
-// }
-// // helper functions
-// fn tot_prob(data: Vec<Complex>) -> f64 {
-//     let data_squared = data.clone().iter().map(|x| x.abs_squared()).collect();
-//     simpsons_rule(data_squared, -L / 2., L / 2.)
-// }
+// iteration testing
+#[test]
+#[allow(non_snake_case)]
+fn oneD_iter() {
+    let wave0 = wave();
+
+    // iteration with matrix multiplication is reliable but horribly slow
+    // Serves as a good test reference for the faster vector iteration rk4 method
+    // that is trickier to get right.
+    let size = wave0.0.len();
+    let T = descrete_derivative_matrix(size);
+
+    let V = descrete_potential_matrix(Box::new(v));
+
+    let U = (DT / Complex::new(0., H_BAR)) * (&T + &V);
+    let iter_matrix = rk4_matrix_mul(&wave0.1, &U);
+
+    let iter_vector = rk4_iter_dt(&wave0.1);
+
+    for i in 0..size {
+        // the resulting values should be equal (with some leeway for floating point errors)
+        assert!(iter_matrix[i].abs_squared() - iter_vector[i].abs_squared() < 1e-15);
+    }
+}

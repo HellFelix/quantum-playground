@@ -29,6 +29,7 @@ fn main() {
     }
 }
 
+#[allow(unused_variables)]
 fn v(x: f64) -> Complex {
     // if x > 2. && x < 2.5 {
     //     Complex::new(1., 0.)
