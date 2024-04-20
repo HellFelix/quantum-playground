@@ -7,7 +7,7 @@ use nalgebra::{DMatrix, DVector};
 
 use crate::{
     complex::Complex,
-    iteration::{descrete_derivative_matrix, descrete_potential_matrix, rk4},
+    iteration::{descrete_derivative_matrix, descrete_potential_matrix, no_matrix_rk4, rk4},
     v, DT, H_BAR,
 };
 
@@ -123,11 +123,12 @@ fn draw_wave_function(mut gizmos: Gizmos, data: Query<&Data>) {
 
 fn update_wave_function(mut data: Query<&mut Data>, matricies: Query<&Matricies>) {
     let mut data = data.get_single_mut().unwrap();
-    let matricies = matricies.get_single().unwrap();
-    // iterate time
 
+    let mut next = data.raw.clone();
     let start = SystemTime::now();
-    let next = rk4(&data.raw, &matricies.U);
+    for _ in 0..200 {
+        next = no_matrix_rk4(&next);
+    }
     info!("iteration took {}", start.elapsed().unwrap().as_micros());
 
     // calculate new values

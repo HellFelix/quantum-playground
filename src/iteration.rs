@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use crate::{complex::*, H_BAR, L, M};
+use crate::{complex::*, DT, H_BAR, L, M};
 use nalgebra::{DMatrix, DVector};
 use num_traits::{One, Zero};
 
@@ -45,4 +45,26 @@ pub fn rk4(psi0: &DVector<Complex>, U: &DMatrix<Complex>) -> DVector<Complex> {
 
     psi0 + Complex::from_real(1. / 6.)
         * &(k1 + Complex::from_real(2.) * &k2 + Complex::from_real(2.) * &k3 + &k4)
+}
+
+pub fn no_matrix_rk4(psi0: &DVector<Complex>) -> DVector<Complex> {
+    let k1 = d_dt(&psi0);
+    let k2 = d_dt(&(psi0 + Complex::from_real(0.5) * &k1));
+    let k3 = d_dt(&(psi0 + Complex::from_real(0.5) * &k2));
+    let k4 = d_dt(&(psi0 + &k3));
+
+    psi0 + Complex::from_real(1. / 6.)
+        * &(k1 + Complex::from_real(2.) * &k2 + Complex::from_real(2.) * &k3 + &k4)
+}
+
+pub fn d_dt(f: &DVector<Complex>) -> DVector<Complex> {
+    let f = -(H_BAR.powi(2) / (2. * M)) * Complex::from_real(1. / DX.powi(2)) * f;
+    let last = f.len() - 1;
+    let mut pre_deriv = vec![-2. * f[0] + f[1]];
+    for i in 1..last {
+        pre_deriv.push(f[i - 1] - 2. * f[i] + f[i + 1]);
+    }
+    pre_deriv.push(f[last - 1] + -2. * f[last]);
+    let res = DVector::from(pre_deriv);
+    (DT / Complex::new(0., H_BAR)) * res
 }

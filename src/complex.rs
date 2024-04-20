@@ -282,3 +282,19 @@ impl Mul<&Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>> fo
         res
     }
 }
+
+impl Mul<Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>> for Complex {
+    type Output = Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>;
+    fn mul(
+        self,
+        rhs: Matrix<Complex, Dyn, Const<1>, VecStorage<Complex, Dyn, Const<1>>>,
+    ) -> Self::Output {
+        let mut res = rhs.to_owned();
+
+        for rhs in res.as_mut_slice().iter_mut() {
+            *rhs *= self
+        }
+
+        res
+    }
+}
