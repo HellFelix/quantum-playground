@@ -1,12 +1,12 @@
 use std::f64::consts::PI;
 
-use crate::{
-    complex::*,
+use super::{
     iteration::{
         descrete_derivative_matrix, descrete_potential_matrix, rk4_iter_dt, rk4_matrix_mul,
     },
     v, wave, DT, H_BAR,
 };
+use crate::complex::*;
 
 #[test]
 fn basic_complex_arithmetic() {

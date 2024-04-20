@@ -1,7 +1,5 @@
 #![allow(non_snake_case)]
 
-use std::time::SystemTime;
-
 use bevy::{
     a11y::{
         accesskit::{NodeBuilder, Role},
@@ -13,7 +11,8 @@ use bevy::{
 };
 use nalgebra::DVector;
 
-use crate::{complex::Complex, iteration::rk4_iter_dt, DT};
+use super::{iteration::rk4_iter_dt, wave, DT};
+use crate::complex::Complex;
 
 pub fn oneD() {
     App::new()
@@ -45,7 +44,7 @@ fn setup(mut commands: Commands) {
     camera.projection.scale = 0.01;
     commands.spawn(camera);
 
-    let wave = crate::wave();
+    let wave = wave();
     let x = DVector::from(wave.0.iter().map(|x| *x as f32).collect::<Vec<f32>>());
     let raw = wave.1.clone();
     let prob = DVector::from(
@@ -170,11 +169,9 @@ fn update_wave_function(
     // iterate
     let mut data = data.get_single_mut().unwrap();
     let mut next = data.raw.clone();
-    let start = SystemTime::now();
     for _ in 0..data.speed {
         next = rk4_iter_dt(&next);
     }
-    info!("iteration took {}us", start.elapsed().unwrap().as_micros());
 
     // calculate new values
     let next_prob = DVector::from(

@@ -1,9 +1,10 @@
 #![allow(non_snake_case)]
-use crate::{complex::*, v, DT, H_BAR, L, M, POTENTIAL};
+use super::{v, DT, H_BAR, L, M, POTENTIAL};
+use crate::complex::*;
 use nalgebra::{DMatrix, DVector};
 use num_traits::{One, Zero};
 
-use crate::DX;
+use super::DX;
 // TODO: implement outside potential v(x)
 pub fn rk4_iter_dt(psi0: &DVector<Complex>) -> DVector<Complex> {
     let k1 = d_dt(&psi0);
@@ -36,6 +37,8 @@ pub fn d_dt(f: &DVector<Complex>) -> DVector<Complex> {
         }
         (DT / Complex::new(0., H_BAR)) * (deriv + potent.to_owned())
     } else {
+        // if there is no potential at all, there is no reason to
+        // calculate the potential vector either
         (DT / Complex::new(0., H_BAR)) * deriv
     }
 }
