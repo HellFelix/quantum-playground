@@ -18,6 +18,7 @@ use crate::complex::Complex;
 pub fn oneD() {
     App::new()
         .add_plugins((DefaultPlugins, FrameTimeDiagnosticsPlugin))
+        .add_event::<ResetEvent>()
         // setup data
         .add_systems(Startup, setup)
         // draw wave every frame
@@ -27,6 +28,7 @@ pub fn oneD() {
             PostUpdate,
             (update_wave_function, update_params, update_options),
         )
+        .add_systems(PostUpdate, (listen_reset, read_reset))
         .run();
 }
 
@@ -76,13 +78,12 @@ enum ToggleVariant {
     Imag,
 }
 
-fn setup(mut commands: Commands) {
-    // camera settings
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 0.01;
-    commands.spawn(camera);
+#[derive(Event)]
+struct ResetEvent;
+#[derive(Component)]
+struct ResetButton;
 
-    // initial wave packet
+fn create_inital() -> Data {
     let wave = wave();
     let x = DVector::from(wave.0.iter().map(|x| *x as f32).collect::<Vec<f32>>());
     let raw = wave.1.clone();
@@ -93,14 +94,23 @@ fn setup(mut commands: Commands) {
             .collect::<Vec<f32>>(),
     );
 
-    let data = Data {
+    Data {
         raw,
         prob,
         x,
         speed: 1,
         time_passed: 0.,
-    };
-    commands.spawn(data);
+    }
+}
+
+fn setup(mut commands: Commands) {
+    // camera settings
+    let mut camera = Camera2dBundle::default();
+    camera.projection.scale = 0.01;
+    commands.spawn(camera);
+
+    // initial wave packet
+    commands.spawn(create_inital());
 
     // Very basic UI to show relevant information and act as a functional interface
     commands
@@ -253,6 +263,39 @@ fn setup(mut commands: Commands) {
                         },
                     ));
                 });
+
+            // reset button
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Percent(65.),
+                            height: Val::Vw(3.),
+                            border: UiRect::all(Val::Px(5.0)),
+                            margin: UiRect::all(Val::Px(5.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+
+                            ..default()
+                        },
+                        border_color: Color::GREEN.into(),
+                        background_color: Color::BLACK.into(),
+                        ..default()
+                    },
+                    ResetButton,
+                    AccessibilityNode(NodeBuilder::new(Role::ListItem)),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Reset",
+                        TextStyle {
+                            font_size: 25.,
+                            ..default()
+                        },
+                    ));
+                });
         });
 }
 fn draw_wave_function(
@@ -399,5 +442,27 @@ fn update_options(
             }
             _ => {}
         };
+    }
+}
+
+fn listen_reset(
+    interaction_query: Query<(&Interaction, &ResetButton), (Changed<Interaction>, With<Button>)>,
+    mut ev_reset: EventWriter<ResetEvent>,
+) {
+    for (interaction, _reset_button) in &interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                ev_reset.send(ResetEvent);
+            }
+            _ => {}
+        };
+    }
+}
+
+fn read_reset(mut ev_reset: EventReader<ResetEvent>, mut data: Query<&mut Data>) {
+    for _e in ev_reset.read() {
+        let mut data = data.get_single_mut().unwrap();
+        // reset to initial conditions
+        *data = create_inital();
     }
 }
