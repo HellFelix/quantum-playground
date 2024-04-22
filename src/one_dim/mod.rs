@@ -10,6 +10,18 @@ const DT: f64 = 0.0005;
 // simulation specifics
 const POTENTIAL: bool = false;
 
+pub struct Barrier1D {
+    start: f64,
+    end: f64,
+    height: f64,
+}
+
+const BARRIERS: [Barrier1D; 1] = [Barrier1D {
+    start: 2.,
+    end: 2.5,
+    height: 1.,
+}];
+
 // External crates
 use nalgebra::DVector;
 use num_traits::Zero;
@@ -18,7 +30,7 @@ use std::f64::consts::{E, PI};
 // internal modules
 mod iteration;
 mod visuals;
-use crate::complex::*;
+use crate::complex::{Complex, *};
 #[cfg(test)]
 mod test;
 
@@ -30,12 +42,13 @@ pub fn run(visual: bool) {
 
 #[allow(unused_variables)]
 fn v(x: f64) -> Complex {
-    // if x > 2. && x < 2.5 {
-    //     Complex::new(1., 0.)
-    // } else {
-    //     Complex::zero()
-    // }
-    Complex::zero()
+    // TODO: Make this work for multiple barriers
+    let b = &BARRIERS[0];
+    if x > b.start && x < b.end {
+        Complex::from_real(b.height)
+    } else {
+        Complex::zero()
+    }
 }
 
 // Creates a wave vector (vector containing the wave function's value at equally spaced

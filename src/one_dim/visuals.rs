@@ -8,10 +8,11 @@ use bevy::{
     diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
     input::keyboard::KeyboardInput,
     prelude::*,
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
-use nalgebra::DVector;
+use nalgebra::{ComplexField, DVector};
 
-use super::{iteration::rk4_iter_dt, wave, DT};
+use super::{iteration::rk4_iter_dt, wave, BARRIERS, DT, POTENTIAL};
 use crate::complex::Complex;
 
 // creates bevy application and initiates simulation for one dimension
@@ -103,7 +104,11 @@ fn create_inital() -> Data {
     }
 }
 
-fn setup(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     // camera settings
     let mut camera = Camera2dBundle::default();
     camera.projection.scale = 0.01;
@@ -111,6 +116,25 @@ fn setup(mut commands: Commands) {
 
     // initial wave packet
     commands.spawn(create_inital());
+
+    if POTENTIAL {
+        // show potential barriers
+        for b in BARRIERS {
+            commands.spawn(MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Rectangle::new(
+                    (b.start - b.end).abs() as f32,
+                    b.height as f32,
+                ))),
+                material: materials.add(Color::rgba(0.96, 0.59, 0.15, 0.46)),
+                transform: Transform::from_xyz(
+                    (b.start + (b.start - b.end).abs() / 2.) as f32,
+                    b.height as f32 / 2.,
+                    0.,
+                ),
+                ..default()
+            });
+        }
+    }
 
     // Very basic UI to show relevant information and act as a functional interface
     commands
