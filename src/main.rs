@@ -5,6 +5,7 @@ use std::{
 
 mod complex;
 mod one_dim;
+mod two_dim;
 
 fn main() {
     // if the program is going to crash, it should do so here
@@ -14,6 +15,7 @@ fn main() {
     }
     match cfg.dims() {
         1 => one_dim::run(cfg.vis()),
+        2 => two_dim::run(cfg.vis()),
         _ => unimplemented!(),
     }
 }
