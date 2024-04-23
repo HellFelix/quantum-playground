@@ -10,18 +10,6 @@ const DT: f64 = 0.0005;
 // simulation specifics
 const POTENTIAL: bool = false;
 
-pub struct Barrier1D {
-    start: f64,
-    end: f64,
-    height: f64,
-}
-
-const BARRIERS: [Barrier1D; 1] = [Barrier1D {
-    start: 2.,
-    end: 2.5,
-    height: 1.,
-}];
-
 // External crates
 use nalgebra::DVector;
 use num_traits::Zero;
@@ -40,15 +28,26 @@ pub fn run(visual: bool) {
     }
 }
 
-#[allow(unused_variables)]
+fn barriers() -> Vec<Box<dyn Fn(f64) -> Complex>> {
+    vec![
+        // rectangle shaped barrier between x = 2.5 and x = 3
+        Box::new(|x| {
+            if x > 2.5 && x < 3. {
+                Complex::from_real(1.)
+            } else {
+                Complex::zero()
+            }
+        }),
+        // quadratic potential based around zero
+        Box::new(|x| Complex::from_real(x.powi(2))),
+    ]
+}
 fn v(x: f64) -> Complex {
-    // TODO: Make this work for multiple barriers
-    let b = &BARRIERS[0];
-    if x > b.start && x < b.end {
-        Complex::from_real(b.height)
-    } else {
-        Complex::zero()
+    let mut res = Complex::zero();
+    for b in barriers() {
+        res += b(x);
     }
+    res
 }
 
 // Creates a wave vector (vector containing the wave function's value at equally spaced
@@ -57,11 +56,16 @@ fn wave() -> (DVector<f64>, DVector<Complex>) {
     // the central value of c(k)
     let k_0: isize = 10;
     // we cannot integrate form -infty..infty, thus we make the cut-off at this value
-    let k_range: isize = 10; // 10
-                             // width of the gaussian
-    let dk = 5f64;
+    let k_range: isize = 20; // 10
+    let dk = 0.5; // discretesation of the grid of k
+    let k_values = ((k_0 - k_range)..=(k_0 + k_range))
+        .map(|x| x as f64 * dk)
+        .collect::<Vec<f64>>();
+
+    let delta_k = 5f64; // width of the gaussian
+
     // c(k) = e^(-(k-k_0)/dk)^2
-    let c_k = |k: f64| E.powf(-((k - k_0 as f64) / dk).powi(2));
+    let c_k = |k: f64| E.powf(-((k - k_0 as f64) / delta_k).powi(2));
     // psi_n(x, k) = e^(ikx)
     let f_k = |x: f64, k: f64| Complex::exp(i() * (k * x));
 
@@ -72,8 +76,8 @@ fn wave() -> (DVector<f64>, DVector<Complex>) {
     let mut wave: Vec<Complex> = Vec::new();
     for x in x_values.clone() {
         let mut p_x = Complex::zero();
-        for k in (k_0 - k_range)..=(k_0 + k_range) {
-            p_x += c_k(k as f64) * f_k(x, k as f64);
+        for k in &k_values {
+            p_x += c_k(*k) * f_k(x, *k);
         }
 
         wave.push(p_x);

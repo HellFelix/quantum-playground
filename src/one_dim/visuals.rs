@@ -12,7 +12,7 @@ use bevy::{
 };
 use nalgebra::{ComplexField, DVector};
 
-use super::{iteration::rk4_iter_dt, wave, BARRIERS, DT, POTENTIAL};
+use super::{iteration::rk4_iter_dt, v, wave, DT, DX, L, POTENTIAL};
 use crate::complex::Complex;
 
 // creates bevy application and initiates simulation for one dimension
@@ -119,23 +119,17 @@ fn setup(
 
     if POTENTIAL {
         // show potential barriers
-        for b in BARRIERS {
-            commands.spawn(MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Rectangle::new(
-                    (b.start - b.end).abs() as f32,
-                    b.height as f32,
-                ))),
-                material: materials.add(Color::rgba(0.96, 0.59, 0.15, 0.46)),
-                transform: Transform::from_xyz(
-                    (b.start + (b.start - b.end).abs() / 2.) as f32,
-                    b.height as f32 / 2.,
-                    0.,
-                ),
-                ..default()
-            });
-        }
+        ((-L / (2. * DX)) as isize..=(L / (2. * DX)) as isize)
+            .map(|x| x as f64 * DX)
+            .for_each(|x| {
+                commands.spawn(MaterialMesh2dBundle {
+                    mesh: Mesh2dHandle(meshes.add(Rectangle::new(DX as f32, v(x).real() as f32))),
+                    material: materials.add(Color::rgba(0.96, 0.59, 0.15, 0.46)),
+                    transform: Transform::from_xyz(x as f32, v(x).real() as f32 / 2., 0.),
+                    ..default()
+                });
+            })
     }
-
     // Very basic UI to show relevant information and act as a functional interface
     commands
         .spawn(NodeBundle {
