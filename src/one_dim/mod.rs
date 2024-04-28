@@ -16,6 +16,7 @@ use num_traits::Zero;
 use std::f64::consts::{E, PI};
 
 // internal modules
+use crate::utils::simpsons_rule;
 mod iteration;
 mod visuals;
 use crate::complex::{Complex, *};
@@ -56,7 +57,7 @@ fn wave() -> (DVector<f64>, DVector<Complex>) {
     // the central value of c(k)
     let k_0: isize = 10;
     // we cannot integrate form -infty..infty, thus we make the cut-off at this value
-    let k_range: isize = 20; // 10
+    let k_range: isize = 10; // 10
     let dk = 0.5; // discretesation of the grid of k
     let k_values = ((k_0 - k_range)..=(k_0 + k_range))
         .map(|x| x as f64 * dk)
@@ -94,21 +95,4 @@ fn normalize(data: Vec<Complex>) -> Vec<Complex> {
     // Each value must be devided by the root of the total integral since
     // we're considering the squares of each data point.
     data.iter().map(|x| *x / tot_integral.sqrt()).collect()
-}
-
-// assumes that the inputted data-points are equally spaced in terms of the independant variable
-// and that the data starts at "start" and ends at "stop"
-fn simpsons_rule(data: Vec<f64>, lower_bound: f64, upper_bound: f64) -> f64 {
-    let mut sum: f64 = (1..data.len())
-        .map(|i| {
-            if i % 3 == 0 {
-                2. * data[i]
-            } else {
-                3. * data[i]
-            }
-        })
-        .sum();
-    sum += data[0] + data.last().unwrap();
-
-    sum * 3. * ((upper_bound - lower_bound) / data.len() as f64) / 8.
 }
