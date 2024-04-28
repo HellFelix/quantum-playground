@@ -4,17 +4,14 @@ use bevy::{
     a11y::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode,
-    },
-    input::keyboard::KeyboardInput,
-    prelude::*,
-};
-use nalgebra::DMatrix;
+    }, input::keyboard::KeyboardInput, prelude::*};
 
-use super::L;
+use super::{wave, Complex};
+use super::DL;
 
 #[derive(Component)]
 struct Data {
-    values: DMatrix<f32>,
+    wave_grid: Vec<Vec<(f64, Complex, f64)>>,
 }
 
 #[derive(Component)]
@@ -31,7 +28,8 @@ struct FOVTExt;
 pub fn twoD() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (setup, setup_data))
+        .add_systems(Update, render)
         .add_systems(PostUpdate, (controls, update_text))
         .run();
 }
@@ -54,11 +52,11 @@ fn setup(
         ..default()
     });
 
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Plane3d::default().mesh().size(L as f32, L as f32)),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3)),
-        ..default()
-    });
+    // commands.spawn(PbrBundle {
+    //     mesh: meshes.add(Plane3d::default().mesh().size(L as f32, L as f32)),
+    //     material: materials.add(Color::rgb(0.3, 0.5, 0.3)),
+    //     ..default()
+    // });
 
     // info text
     commands
@@ -86,6 +84,27 @@ fn setup(
         transform: Transform::from_xyz(0., 8.0, 0.),
         ..default()
     });
+}
+
+fn setup_data(mut commands: Commands) {
+    commands.spawn(Data { wave_grid: wave() });
+}
+
+fn render(mut gizmos: Gizmos, data_query: Query<&Data>)  {
+    let data = data_query.get_single().unwrap();
+    let wave = &data.wave_grid;
+    for i in 0..wave.len() -1{
+        for j in 0..wave.len()-1 {
+            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.abs_squared() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.abs_squared()-wave[i][j].1.abs_squared()) as f32, 0.), Color::GREEN);
+            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.abs_squared() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.abs_squared()-wave[i][j].1.abs_squared()) as f32, DL as f32), Color::GREEN);
+            // Real Axis
+            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.real() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.real()-wave[i][j].1.real()) as f32, 0.), Color::RED);
+            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.real() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.real()-wave[i][j].1.real()) as f32, DL as f32), Color::RED);
+            // Imag Axis
+            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.imag() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.imag()-wave[i][j].1.imag()) as f32, 0.), Color::BLUE);
+            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.imag() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.imag()-wave[i][j].1.imag()) as f32, DL as f32), Color::BLUE);
+        }
+    }
 }
 
 fn info_text(parent: &mut ChildBuilder, identifier: impl Component) {

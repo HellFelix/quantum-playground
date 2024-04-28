@@ -4,6 +4,7 @@ use std::{
 };
 
 mod complex;
+mod utils;
 mod one_dim;
 mod two_dim;
 
