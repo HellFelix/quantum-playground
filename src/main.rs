@@ -7,6 +7,7 @@ mod complex;
 mod utils;
 mod one_dim;
 mod two_dim;
+mod consts;
 
 fn main() {
     // if the program is going to crash, it should do so here

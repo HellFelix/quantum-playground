@@ -10,7 +10,7 @@ use bevy::{
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
-use nalgebra::{ComplexField, DVector};
+use nalgebra::DVector;
 
 use super::{iteration::rk4_iter_dt, v, wave, DT, DX, L, POTENTIAL};
 use crate::complex::Complex;

@@ -1,5 +1,6 @@
 use std::{f64::consts::E, vec};
 
+use nalgebra::DVector;
 use num_traits::Zero;
 
 use crate::{complex::{i, Complex}, utils::simpsons_rule};
@@ -15,9 +16,9 @@ pub fn run(visual: bool) {
     }
 }
 
-pub fn wave() -> Vec<Vec<(f64, Complex, f64)>> {
+pub fn wave() -> DVector<DVector<(f64, Complex, f64)>> {
         // the central value of c(k)
-    let k_0: isize = 0;
+    let k_0: isize = 10;
     // we cannot integrate form -infty..infty, thus we make the cut-off at this value
     let k_range: isize = 5; // 10
     let dk = 0.5; // discretesation of the grid of k
@@ -29,11 +30,11 @@ pub fn wave() -> Vec<Vec<(f64, Complex, f64)>> {
                         // c(k) = e^(-(k-k_0)/dk)^2
     let c_k = |k: f64| E.powf(-((k - k_0 as f64) / delta_k).powi(2));
     // psi_n(x, k) = e^(ikx)
-    let f_k = |x: f64, z: f64, k: f64| Complex::exp(i() * (k * x)) + Complex::exp(i() * (k * z));
+    let f_k = |u: f64, k: f64| Complex::exp(i() * (k * u));
 
     // General gaussian
     // let f = |x: f32, z: f32| {E.powf(-(x.powi(2)+z.powi(2)))};
-    let mut wave: Vec<Vec<(f64, Complex, f64)>> = vec![];
+    let mut wave: DVector<DVector<(f64, Complex, f64)>> = DVector::from(vec![]);
 
     for i in -(L/(DL*2.)) as isize..=(L/(DL*2.)) as isize {
         let x_c = i as f64 *DL;
@@ -41,21 +42,24 @@ pub fn wave() -> Vec<Vec<(f64, Complex, f64)>> {
         for j in -(L/(DL*2.)) as isize..=(L/(DL*2.)) as isize {
             let z_c = j as f64 * DL;
             let mut res = Complex::zero();
-            for k in &k_values {
-                res += c_k(*k) * f_k(x_c, z_c, *k);
+            for k_x in &k_values {
+                for k_z in &k_values {
+                    res += c_k(*k_x)*c_k(*k_z) * f_k(x_c, *k_x) * f_k(z_c, *k_z);
+                }
             }
             ind_wave.push((x_c, res, z_c));
         }
-        wave.push(ind_wave);
+        wave = wave.push(ind_wave.into());
     }
 
     normalize_2d(wave)
 }
 
-fn normalize_2d(mut data: Vec<Vec<(f64, Complex, f64)>>) -> Vec<Vec<(f64, Complex, f64)>> {
+// double integral for 2d
+fn normalize_2d(mut data: DVector<DVector<(f64, Complex, f64)>>) -> DVector<DVector<(f64, Complex, f64)>> {
     let mut int_vec = Vec::new();
     // integrate for every vector by itself
-    for v in data.clone() {
+    for v in data.clone().iter() {
         let data_squared = v.clone().iter().map(|x| x.1.abs_squared()).collect::<Vec<f64>>();
         int_vec.push(simpsons_rule(data_squared, -L/2., L/2.));
     }
@@ -71,3 +75,17 @@ fn normalize_2d(mut data: Vec<Vec<(f64, Complex, f64)>>) -> Vec<Vec<(f64, Comple
 
     data
 }
+
+// pub fn dt(psi0: &DVector<DVector<Complex>>) -> DVector<DVector<Complex>> {
+//     let k1 = d_dt(&psi0);
+//     let k2 = d_dt(&(psi0 + Complex::from_real(0.5) * &k1));
+//     let k3 = d_dt(&(psi0 + Complex::from_real(0.5) * &k2));
+//     let k4 = d_dt(&(psi0 + &k3));
+
+//     psi0 + Complex::from_real(1. / 6.)
+//         * &(k1 + Complex::from_real(2.) * &k2 + Complex::from_real(2.) * &k3 + &k4)
+// }
+
+// fn d_dt(f: &DVector<DVector<Complex>>) -> DVector<DVector<Complex>> {
+//     unimplemented!()
+// }

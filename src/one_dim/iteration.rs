@@ -5,7 +5,6 @@ use nalgebra::{DMatrix, DVector};
 use num_traits::{One, Zero};
 
 use super::DX;
-// TODO: implement outside potential v(x)
 pub fn rk4_iter_dt(psi0: &DVector<Complex>) -> DVector<Complex> {
     let k1 = d_dt(&psi0);
     let k2 = d_dt(&(psi0 + Complex::from_real(0.5) * &k1));

@@ -1,9 +1,4 @@
-// constants for simulation
-const H: f64 = 1.;
-const H_BAR: f64 = H / (2. * PI);
-const M: f64 = 1.;
-const L: f64 = 8.; //8
-
+use crate::consts::*;
 const DX: f64 = 0.01;
 const DT: f64 = 0.0005;
 

@@ -5,13 +5,14 @@ use bevy::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode,
     }, input::keyboard::KeyboardInput, prelude::*};
+use nalgebra::DVector;
 
 use super::{wave, Complex};
 use super::DL;
 
 #[derive(Component)]
 struct Data {
-    wave_grid: Vec<Vec<(f64, Complex, f64)>>,
+    wave_grid: DVector<DVector<(f64, Complex, f64)>>,
 }
 
 #[derive(Component)]
@@ -36,8 +37,6 @@ pub fn twoD() {
 
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.spawn(Camera3dBundle {
         transform: Transform {
@@ -97,12 +96,12 @@ fn render(mut gizmos: Gizmos, data_query: Query<&Data>)  {
         for j in 0..wave.len()-1 {
             gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.abs_squared() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.abs_squared()-wave[i][j].1.abs_squared()) as f32, 0.), Color::GREEN);
             gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.abs_squared() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.abs_squared()-wave[i][j].1.abs_squared()) as f32, DL as f32), Color::GREEN);
-            // Real Axis
-            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.real() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.real()-wave[i][j].1.real()) as f32, 0.), Color::RED);
-            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.real() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.real()-wave[i][j].1.real()) as f32, DL as f32), Color::RED);
-            // Imag Axis
-            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.imag() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.imag()-wave[i][j].1.imag()) as f32, 0.), Color::BLUE);
-            gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.imag() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.imag()-wave[i][j].1.imag()) as f32, DL as f32), Color::BLUE);
+            // // Real Axis
+            // gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.real() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.real()-wave[i][j].1.real()) as f32, 0.), Color::RED);
+            // gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.real() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.real()-wave[i][j].1.real()) as f32, DL as f32), Color::RED);
+            // // Imag Axis
+            // gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.imag() as f32, wave[i][j].2 as f32), Vec3::new(DL as f32, (wave[i+1][j].1.imag()-wave[i][j].1.imag()) as f32, 0.), Color::BLUE);
+            // gizmos.ray(Vec3::new(wave[i][j].0 as f32, wave[i][j].1.imag() as f32, wave[i][j].2 as f32), Vec3::new(0., (wave[i][j+1].1.imag()-wave[i][j].1.imag()) as f32, DL as f32), Color::BLUE);
         }
     }
 }
